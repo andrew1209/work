@@ -13,14 +13,17 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.Data;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class HttpInboundServer {
 
     public static void main(String[] args) throws InterruptedException {
 
-        int port = 8088;
-        List<String> proxyServers = ListUtil.of("proxyServers","http://127.0.0.1:8088");
+        String proxyPort = System.getProperty("proxyPort", "8088");
+
+        // 这是多个后端url走随机路由的例子
+        String proxyServers = System.getProperty("proxyServers", "http://localhost:8801,http://localhost:8802");
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup(16);
@@ -39,8 +42,9 @@ public class HttpInboundServer {
 
             b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
-            .childHandler(new HttpInboundInitializer(proxyServers));
+                    .childHandler(new HttpInboundInitializer(Arrays.asList(proxyServers.split(","))));
 
+            int port = Integer.parseInt(proxyPort);
             Channel ch = b.bind(port).sync().channel();
             ch.closeFuture().sync();
         } finally {
