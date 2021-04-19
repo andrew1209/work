@@ -1,0 +1,6 @@
+school:
+  students:
+  - name: cj
+    age: 20
+  - name: cd
+    age: 21
